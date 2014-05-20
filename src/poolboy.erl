@@ -19,6 +19,13 @@
 
 -define(TIMEOUT, 5000).
 
+-type pool() ::
+    Name :: atom() |
+    {Name :: atom(), node()} |
+    {local, Name :: atom()} |
+    {global, GlobalName :: any()} |
+    {via, Module :: atom(), ViaName :: any()}.
+
 -record(state, {
     supervisor :: pid(),
     workers :: queue(),
@@ -29,24 +36,24 @@
     max_overflow = 10 :: non_neg_integer()
 }).
 
--spec checkout(Pool :: node()) -> pid().
+-spec checkout(Pool :: pool()) -> pid().
 checkout(Pool) ->
     checkout(Pool, true).
 
--spec checkout(Pool :: node(), Block :: boolean()) -> pid() | full.
+-spec checkout(Pool :: pool(), Block :: boolean()) -> pid() | full.
 checkout(Pool, Block) ->
     checkout(Pool, Block, ?TIMEOUT).
 
--spec checkout(Pool :: node(), Block :: boolean(), Timeout :: timeout())
+-spec checkout(Pool :: pool(), Block :: boolean(), Timeout :: timeout())
     -> pid() | full.
 checkout(Pool, Block, Timeout) ->
     gen_fsm:sync_send_event(Pool, {checkout, Block, Timeout}, Timeout).
 
--spec checkin(Pool :: node(), Worker :: pid()) -> ok.
+-spec checkin(Pool :: pool(), Worker :: pid()) -> ok.
 checkin(Pool, Worker) when is_pid(Worker) ->
     gen_fsm:send_event(Pool, {checkin, Worker}).
 
--spec transaction(Pool :: node(), Fun :: fun((Worker :: pid()) -> any()))
+-spec transaction(Pool :: pool(), Fun :: fun((Worker :: pid()) -> any()))
     -> any().
 transaction(Pool, Fun) ->
     Worker = poolboy:checkout(Pool),
@@ -56,17 +63,17 @@ transaction(Pool, Fun) ->
         ok = poolboy:checkin(Pool, Worker)
     end.
 
--spec child_spec(Pool :: node(), PoolArgs :: proplists:proplist())
+-spec child_spec(PoolId :: term(), PoolArgs :: proplists:proplist())
     -> supervisor:child_spec().
-child_spec(Pool, PoolArgs) ->
-    child_spec(Pool, PoolArgs, []).
+child_spec(PoolId, PoolArgs) ->
+    child_spec(PoolId, PoolArgs, []).
 
--spec child_spec(Pool :: node(),
+-spec child_spec(PoolId :: term(),
                  PoolArgs :: proplists:proplist(),
                  WorkerArgs :: proplists:proplist())
     -> supervisor:child_spec().
-child_spec(Pool, PoolArgs, WorkerArgs) ->
-    {Pool, {poolboy, start_link, [PoolArgs, WorkerArgs]},
+child_spec(PoolId, PoolArgs, WorkerArgs) ->
+    {PoolId, {poolboy, start_link, [PoolArgs, WorkerArgs]},
      permanent, 5000, worker, [poolboy]}.
 
 -spec start(PoolArgs :: proplists:proplist())
@@ -92,11 +99,11 @@ start_link(PoolArgs)  ->
 start_link(PoolArgs, WorkerArgs)  ->
     start_pool(start_link, PoolArgs, WorkerArgs).
 
--spec stop(Pool :: node()) -> ok.
+-spec stop(Pool :: pool()) -> ok.
 stop(Pool) ->
     gen_fsm:sync_send_all_state_event(Pool, stop).
 
--spec status(Pool :: node()) -> {atom(), integer(), integer(), integer()}.
+-spec status(Pool :: pool()) -> {atom(), integer(), integer(), integer()}.
 status(Pool) ->
     gen_fsm:sync_send_all_state_event(Pool, status).
 
