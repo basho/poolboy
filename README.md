@@ -2,6 +2,9 @@
 
 [![Build Status](https://secure.travis-ci.org/basho/poolboy.png?branch=master)](http://travis-ci.org/basho/poolboy)
 
+Poolboy is a **lightweight**, **generic** pooling library for Erlang with a
+focus on **simplicity**, **performance**, and **rock-solid** disaster recovery.
+
 ## Usage
 
 ```erl-sh
@@ -113,6 +116,7 @@ start_link(Args) ->
     gen_server:start_link(?MODULE, Args, []).
 
 init(Args) ->
+    process_flag(trap_exit, true),
     Hostname = proplists:get_value(hostname, Args),
     Database = proplists:get_value(database, Args),
     Username = proplists:get_value(username, Args),
@@ -161,3 +165,6 @@ code_change(_OldVsn, State, _Extra) ->
 Poolboy is available in the public domain (see `UNLICENSE`).
 Poolboy is also optionally available under the Apache License (see `LICENSE`),
 meant especially for jurisdictions that do not recognize public domain works.
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/devinus/poolboy/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
