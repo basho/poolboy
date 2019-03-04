@@ -307,6 +307,8 @@ handle_info({'EXIT', Pid, _Reason}, StateName, State) ->
 handle_info(_Info, StateName, State) ->
     {next_state, StateName, State}.
 
+terminate(shutdown, _StateName, #state{workers=Workers}) ->
+    lists:foreach(fun (W) -> unlink(W) end, queue:to_list(Workers));
 terminate(_Reason, _StateName, _State) ->
     ok.
 
