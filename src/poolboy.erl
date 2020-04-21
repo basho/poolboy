@@ -3,6 +3,14 @@
 -module(poolboy).
 -behaviour(gen_fsm).
 
+-compile({nowarn_deprecated_function, 
+            [{gen_fsm, start_link, 3},
+                {gen_fsm, start, 3},
+                {gen_fsm, reply, 2},
+                {gen_fsm, sync_send_event, 3},
+                {gen_fsm, send_event, 2},
+                {gen_fsm, sync_send_all_state_event, 2}]}).
+
 -export([checkout/1, checkout/2, checkout/3, checkin/2, transaction/2,
          child_spec/2, child_spec/3, start/1, start/2, start_link/1,
          start_link/2, stop/1, status/1]).
@@ -26,8 +34,8 @@
 -endif.
 
 -record(state, {
-    supervisor :: pid(),
-    workers :: poolboy_queue(),
+    supervisor :: pid() | undefined,
+    workers :: poolboy_queue() |undefined,
     waiting :: poolboy_queue(),
     monitors :: ets:tid(),
     size = 5 :: non_neg_integer(),
@@ -35,15 +43,15 @@
     max_overflow = 10 :: non_neg_integer()
 }).
 
--spec checkout(Pool :: node()) -> pid().
+-spec checkout(Pool :: node() | pid()) -> pid().
 checkout(Pool) ->
     checkout(Pool, true).
 
--spec checkout(Pool :: node(), Block :: boolean()) -> pid() | full.
+-spec checkout(Pool :: node() | pid(), Block :: boolean()) -> pid() | full.
 checkout(Pool, Block) ->
     checkout(Pool, Block, ?TIMEOUT).
 
--spec checkout(Pool :: node(), Block :: boolean(), Timeout :: timeout())
+-spec checkout(Pool :: node() | pid(), Block :: boolean(), Timeout :: timeout())
     -> pid() | full.
 checkout(Pool, Block, Timeout) ->
     gen_fsm:sync_send_event(Pool, {checkout, Block, Timeout}, Timeout).
@@ -52,7 +60,7 @@ checkout(Pool, Block, Timeout) ->
 checkin(Pool, Worker) when is_pid(Worker) ->
     gen_fsm:send_event(Pool, {checkin, Worker}).
 
--spec transaction(Pool :: node(), Fun :: fun((Worker :: pid()) -> any()))
+-spec transaction(Pool :: node() | pid(), Fun :: fun((Worker :: pid()) -> any()))
     -> any().
 transaction(Pool, Fun) ->
     Worker = poolboy:checkout(Pool),

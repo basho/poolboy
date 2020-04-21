@@ -1,5 +1,4 @@
-REBAR = ./rebar
-DIALYZER = dialyzer
+REBAR = ./rebar3
 
 DIALYZER_WARNINGS = -Wunmatched_returns -Werror_handling \
                     -Wrace_conditions -Wunderspecs
@@ -12,7 +11,7 @@ compile:
 	@$(REBAR) compile
 
 test: compile
-	@$(REBAR) eunit skip_deps=true
+	@$(REBAR) do eunit skip_deps=true, cover
 
 qc: compile
 	@$(REBAR) qc skip_deps=true
@@ -23,10 +22,5 @@ clean:
 get-deps:
 	@$(REBAR) get-deps
 
-build-plt:
-	@$(DIALYZER) --build_plt --output_plt .dialyzer_plt \
-	    --apps kernel stdlib
-
 dialyze: compile
-	@$(DIALYZER) --src src --plt .dialyzer_plt $(DIALYZER_WARNINGS) | \
-	    fgrep -vf .dialyzer-ignore-warnings
+	@$(REBAR) dialyzer

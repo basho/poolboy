@@ -2,6 +2,9 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+-compile({nowarn_deprecated_function, 
+            [{gen_fsm, sync_send_all_state_event, 2}]}).
+
 -define(sync(Pid, Event),
     gen_fsm:sync_send_all_state_event(Pid, Event)).
 

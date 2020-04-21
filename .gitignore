@@ -3,3 +3,6 @@
 .test
 .eunit
 .dialyzer_plt
+_build/*
+rebar.lock
+.DS_Store
