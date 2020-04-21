@@ -56,7 +56,7 @@ checkout(Pool, Block) ->
 checkout(Pool, Block, Timeout) ->
     gen_fsm:sync_send_event(Pool, {checkout, Block, Timeout}, Timeout).
 
--spec checkin(Pool :: node(), Worker :: pid()) -> ok.
+-spec checkin(Pool :: node() | pid(), Worker :: pid()) -> ok.
 checkin(Pool, Worker) when is_pid(Worker) ->
     gen_fsm:send_event(Pool, {checkin, Worker}).
 
